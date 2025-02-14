@@ -14,14 +14,15 @@
             color: #ffffff;
         }
 
+        /* Dark mode toggle button */
         .dark-mode-toggle {
-            position: absolute;
-            top: 5px; /* Adjusted to prevent overlap */
-            right: 10px;
+            position: fixed;
+            top: 15px;
+            right: 15px;
             background: #333;
             color: #fff;
             border: none;
-            padding: 10px;
+            padding: 10px 15px;
             cursor: pointer;
             border-radius: 5px;
             z-index: 1000;
@@ -31,14 +32,49 @@
             width: 100%;
             height: 80vh;
         }
+
+        /* User input form styling */
+        .form-container {
+            margin-top: 15px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+        
+        .dark-mode .form-container {
+            background: #333;
+            color: #fff;
+        }
     </style>
 </head>
 <body>
     <button id="dark-mode-toggle" class="dark-mode-toggle">Toggle Dark Mode</button>
-    <div class="container-fluid py-5">
+
+    <div class="container-fluid py-3">
         <div class="row">
             <div class="col-12">
                 <div id="map"></div>
+            </div>
+        </div>
+        
+        <!-- User Input Form for Adding Custom Locations -->
+        <div class="row">
+            <div class="col-md-6 offset-md-3">
+                <div class="form-container">
+                    <h5>Add a Custom Landmark</h5>
+                    <form id="landmark-form">
+                        <div class="mb-2">
+                            <input type="text" id="landmark-name" class="form-control" placeholder="Landmark Name" required>
+                        </div>
+                        <div class="mb-2">
+                            <input type="number" id="latitude" class="form-control" placeholder="Latitude" step="any" required>
+                        </div>
+                        <div class="mb-2">
+                            <input type="number" id="longitude" class="form-control" placeholder="Longitude" step="any" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Add Landmark</button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
@@ -47,10 +83,13 @@
     <script>
         let map = L.map('map').setView([20, 0], 2);
 
-        const lightModeTiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap contributors'
+        // Tiles that force English labels
+        const lightModeTiles = L.tileLayer('https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap France & contributors',
+            detectRetina: true
         });
 
+        // Dark mode tiles
         const darkModeTiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
             attribution: '&copy; OpenStreetMap contributors & CartoDB'
         });
@@ -58,10 +97,9 @@
         let currentTileLayer = lightModeTiles;
         currentTileLayer.addTo(map);
 
-        // Store markers in a layer group so they persist when toggling layers
         const markerLayer = L.layerGroup().addTo(map);
 
-        // Predefined landmarks (Wonders of the World)
+        // Wonders of the World
         const landmarks = [
             { name: "Great Wall of China", coords: [40.4319, 116.5704] },
             { name: "Petra", coords: [30.3285, 35.4444] },
@@ -69,18 +107,17 @@
             { name: "Machu Picchu", coords: [-13.1631, -72.5450] },
             { name: "Chichen Itza", coords: [20.6843, -88.5678] },
             { name: "Roman Colosseum", coords: [41.8902, 12.4922] },
-            { name: "Taj Mahal", coords: [27.1751, 78.0421] },
-            { name: "Great Pyramid of Giza", coords: [29.979235, 31.134201] }
+            { name: "Taj Mahal", coords: [27.1751, 78.0421] }
         ];
 
-        // Add markers for predefined landmarks
+        // Add predefined landmark markers
         landmarks.forEach(landmark => {
             L.marker(landmark.coords)
                 .bindPopup(`<b>${landmark.name}</b>`)
                 .addTo(markerLayer);
         });
 
-        // Function to handle dark mode toggling
+        // Dark Mode Toggle
         document.getElementById('dark-mode-toggle').addEventListener('click', function() {
             document.body.classList.toggle('dark-mode');
             const darkModeEnabled = document.body.classList.contains('dark-mode');
@@ -92,13 +129,37 @@
             localStorage.setItem('darkMode', darkModeEnabled);
         });
 
-        // Load dark mode state on page load
+        // Load dark mode setting on page load
         if (localStorage.getItem('darkMode') === 'true') {
             document.body.classList.add('dark-mode');
             map.removeLayer(currentTileLayer);
             currentTileLayer = darkModeTiles;
             currentTileLayer.addTo(map);
         }
+
+        // Handle user input for adding custom landmarks
+        document.getElementById('landmark-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            let name = document.getElementById('landmark-name').value.trim();
+            let lat = parseFloat(document.getElementById('latitude').value);
+            let lng = parseFloat(document.getElementById('longitude').value);
+
+            if (!name || isNaN(lat) || isNaN(lng)) {
+                alert("Please enter valid values.");
+                return;
+            }
+
+            // Add marker for custom input
+            L.marker([lat, lng])
+                .bindPopup(`<b>${name}</b>`)
+                .addTo(markerLayer);
+
+            // Reset form fields
+            document.getElementById('landmark-name').value = "";
+            document.getElementById('latitude').value = "";
+            document.getElementById('longitude').value = "";
+        });
     </script>
 </body>
 </html>
