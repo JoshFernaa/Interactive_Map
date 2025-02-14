@@ -71,6 +71,8 @@
         });
 
         let currentTileLayer = lightModeTiles;
+        currentTileLayer.addTo(map);
+
         const markerLayer = L.layerGroup().addTo(map);
 
         const landmarks = [
@@ -109,38 +111,53 @@
 
         map.on('click', async function (e) {
             const { lat, lng } = e.latlng;
+
             const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
             const data = await response.json();
             const address = data.display_name || "Custom Location";
 
             const marker = L.marker([lat, lng]).addTo(map);
+
             marker.bindPopup(`
                 <div>
                     <input type="text" value="${address}" id="marker-name-${lat}-${lng}" style="width: 100%; margin-bottom: 5px;">
-                    <button onclick="updateMarkerName('${lat}', '${lng}')" class="btn btn-primary btn-sm">Save</button>
-                    <button onclick="deleteMarker('${lat}', '${lng}')" class="btn btn-danger btn-sm">Delete</button>
+                    <button onclick="saveMarker(this, ${lat}, ${lng})" class="btn btn-primary btn-sm">Save</button>
+                    <button onclick="deleteMarker(this, ${lat}, ${lng})" class="btn btn-danger btn-sm">Delete</button>
                 </div>
             `).openPopup();
         });
 
-        function updateMarkerName(lat, lng) {
+        function saveMarker(button, lat, lng) {
             const inputField = document.getElementById(`marker-name-${lat}-${lng}`);
-            if (!inputField) return;
             const newName = inputField.value;
 
-            map.eachLayer(layer => {
-                if (layer instanceof L.Marker && layer.getLatLng().lat == lat && layer.getLatLng().lng == lng) {
-                    layer.setPopupContent(`
-                        <div>
-                            <p><strong>${newName}</strong></p>
-                            <button onclick="deleteMarker('${lat}', '${lng}')" class="btn btn-danger btn-sm">Delete</button>
-                        </div>
-                    `);
-                }
-            });
+            const marker = findMarker(lat, lng);
+            if (marker) {
+                marker.bindPopup(`
+                    <div>
+                        <p><strong>${newName}</strong></p>
+                        <button onclick="editMarker(this, ${lat}, ${lng})" class="btn btn-secondary btn-sm">Edit</button>
+                        <button onclick="deleteMarker(this, ${lat}, ${lng})" class="btn btn-danger btn-sm">Delete</button>
+                    </div>
+                `);
+                marker.openPopup();
+            }
         }
 
-        function deleteMarker(lat, lng) {
+        function editMarker(button, lat, lng) {
+            const marker = findMarker(lat, lng);
+            if (marker) {
+                marker.bindPopup(`
+                    <div>
+                        <input type="text" id="marker-name-${lat}-${lng}" style="width: 100%; margin-bottom: 5px;">
+                        <button onclick="saveMarker(this, ${lat}, ${lng})" class="btn btn-primary btn-sm">Save</button>
+                        <button onclick="deleteMarker(this, ${lat}, ${lng})" class="btn btn-danger btn-sm">Delete</button>
+                    </div>
+                `).openPopup();
+            }
+        }
+
+        function deleteMarker(button, lat, lng) {
             map.eachLayer(layer => {
                 if (layer instanceof L.Marker && layer.getLatLng().lat == lat && layer.getLatLng().lng == lng) {
                     map.removeLayer(layer);
