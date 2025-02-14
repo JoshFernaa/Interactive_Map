@@ -28,7 +28,6 @@
             z-index: 9999;
         }
 
-
         #map {
             width: 100%;
             height: 80vh;
@@ -57,24 +56,6 @@
                 <div id="map"></div>
             </div>
         </div>
-        
-        <!-- User Input Form for Adding Custom Locations -->
-        <div class="row">
-            <div class="col-md-6 offset-md-3">
-                <div class="form-container">
-                    <h5>Add a Custom Landmark</h5>
-                    <form id="landmark-form">
-                        <div class="mb-2">
-                            <input type="text" id="landmark-name" class="form-control" placeholder="Landmark Name" required>
-                        </div>
-                        <div class="mb-2">
-                            <input type="text" id="address" class="form-control" placeholder="Enter Address" required>
-                        </div>
-                        <button type="submit" class="btn btn-primary">Add Landmark</button>
-                    </form>
-                </div>
-            </div>
-        </div>
     </div>
 
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
@@ -87,7 +68,6 @@
             subdomains: 'abcd',
             maxZoom: 20
         }).addTo(map);
-
 
         // Dark mode tiles
         const darkModeTiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
@@ -137,55 +117,50 @@
             currentTileLayer.addTo(map);
         }
 
-        // Handle user input for adding custom landmarks
-        document.getElementById('landmark-form').addEventListener('submit', function(event) {
-            event.preventDefault();
-
-            let name = document.getElementById('landmark-name').value.trim();
-            let address = document.getElementById('address').value.trim();
-
-            if (!name || !address) {
-                alert("Please enter a valid landmark name and address.");
-                return;
-            }
-
-            // Use OpenStreetMap Nominatim API for geocoding
-            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.length === 0) {
-                        alert("Address not found. Please try another.");
-                        return;
-                    }
-
-                    let lat = parseFloat(data[0].lat);
-                    let lng = parseFloat(data[0].lon);
-
-                    // Add marker for custom input
-                    L.marker([lat, lng])
-                        .bindPopup(`<b>${name}</b><br>${address}`)
-                        .addTo(markerLayer);
-
-                    // Reset form fields
-                    document.getElementById('landmark-name').value = "";
-                    document.getElementById('address').value = "";
-                })
-                .catch(error => {
-                    console.error("Error fetching location:", error);
-                    alert("Error fetching location. Please try again.");
-                });
-        });
-
         // Allow users to click on the map to add a marker
-        map.on('click', function(event) {
-            let lat = event.latlng.lat;
-            let lng = event.latlng.lng;
-            let customMarker = L.marker([lat, lng])
-                .bindPopup(`<b>Custom Marker</b><br>Lat: ${lat.toFixed(5)}, Lng: ${lng.toFixed(5)}`)
-                .addTo(markerLayer);
+        map.on('click', async function (e) {
+            const { lat, lng } = e.latlng;
 
-            customMarker.openPopup();
+            // Use OpenStreetMap's Nominatim API to get the address from lat/lng
+            const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+            const data = await response.json();
+            const address = data.display_name || "Custom Location";
+
+            // Create marker with a popup
+            const marker = L.marker([lat, lng]).addTo(map);
+
+            // Popup with editable name & delete button
+            marker.bindPopup(`
+                <div>
+                    <input type="text" value="${address}" id="marker-name" style="width: 100%; margin-bottom: 5px;">
+                    <button onclick="updateMarkerName(this, '${lat}', '${lng}')" class="btn btn-primary btn-sm">Save</button>
+                    <button onclick="deleteMarker(this, '${lat}', '${lng}')" class="btn btn-danger btn-sm">Delete</button>
+                </div>
+            `).openPopup();
         });
+
+        // Function to update marker name
+        function updateMarkerName(button, lat, lng) {
+            const markerPopup = button.parentElement;
+            const newName = markerPopup.querySelector("input").value;
+            
+            // Update popup content
+            markerPopup.innerHTML = `
+                <div>
+                    <p><strong>${newName}</strong></p>
+                    <button onclick="deleteMarker(this, '${lat}', '${lng}')" class="btn btn-danger btn-sm">Delete</button>
+                </div>
+            `;
+        }
+
+        // Function to delete marker
+        function deleteMarker(button, lat, lng) {
+            map.eachLayer(layer => {
+                if (layer instanceof L.Marker && layer.getLatLng().lat == lat && layer.getLatLng().lng == lng) {
+                    map.removeLayer(layer);
+                }
+            });
+        }
     </script>
 </body>
 </html>
