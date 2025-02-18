@@ -129,6 +129,7 @@
             { name: "Taj Mahal", coords: [27.1751, 78.0421] }
         ];
 
+        // Add preset landmarks to the map
         landmarks.forEach(landmark => {
             const marker = L.marker(landmark.coords).addTo(markerLayer);
             marker.bindPopup(`
@@ -158,6 +159,7 @@
             currentTileLayer.addTo(map);
         }
 
+        // Add a marker when the map is clicked
         map.on('click', async function(e) {
             if (e.originalEvent.target.tagName !== 'BUTTON' && e.originalEvent.target.tagName !== 'INPUT') {
                 const { lat, lng } = e.latlng;
@@ -167,7 +169,7 @@
                     const data = await response.json();
                     const address = data.display_name || "Custom Location";
 
-                    const marker = L.marker([lat, lng]).addTo(map);
+                    const marker = L.marker([lat, lng]).addTo(markerLayer);
                     marker.bindPopup(`
                         <div>
                             <input type="text" value="${address}" id="marker-name-${marker._leaflet_id}" style="width: 100%; margin-bottom: 5px;">
@@ -181,26 +183,35 @@
             }
         });
 
+        // Update marker name
         function updateMarkerName(markerId) {
             const input = document.getElementById(`marker-name-${markerId}`);
             if (!input) return;
             
             const newName = input.value;
-            map.eachLayer(layer => {
+            markerLayer.eachLayer(layer => {
                 if (layer instanceof L.Marker && layer._leaflet_id === markerId) {
-                    layer.bindPopup(`<b>${newName}</b>`);
+                    layer.bindPopup(`
+                        <div>
+                            <input type="text" value="${newName}" id="marker-name-${markerId}" style="width: 100%; margin-bottom: 5px;">
+                            <button onclick="updateMarkerName(${markerId})" class="btn btn-primary btn-sm">Save</button>
+                            <button onclick="deleteMarker(${markerId})" class="btn btn-danger btn-sm">Delete</button>
+                        </div>
+                    `);
                 }
             });
         }
 
+        // Delete marker
         function deleteMarker(markerId) {
-            map.eachLayer(layer => {
+            markerLayer.eachLayer(layer => {
                 if (layer instanceof L.Marker && layer._leaflet_id === markerId) {
-                    map.removeLayer(layer);
+                    markerLayer.removeLayer(layer);
                 }
             });
         }
 
+        // Search functionality
         function performSearch() {
             const query = document.getElementById('search-input').value;
             if (!query) return;
@@ -212,7 +223,7 @@
                         const { lat, lon, display_name } = data[0];
                         map.setView([lat, lon], 13);
 
-                        const marker = L.marker([lat, lon]).addTo(map);
+                        const marker = L.marker([lat, lon]).addTo(markerLayer);
                         marker.bindPopup(`
                             <div>
                                 <input type="text" value="${display_name}" id="marker-name-${marker._leaflet_id}" style="width: 100%; margin-bottom: 5px;">
