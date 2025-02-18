@@ -43,32 +43,15 @@
             color: #fff;
         }
 
-        .search-container {
+        .search-container, .route-container {
             margin: 15px auto;
-            text-align: center;
-            max-width: 600px;
             padding: 10px;
             background: white;
             border-radius: 5px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
 
-        .dark-mode .search-container {
-            background: #333;
-            color: #fff;
-        }
-
-        .route-container {
-            margin: 15px auto;
-            text-align: center;
-            max-width: 600px;
-            padding: 10px;
-            background: white;
-            border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-
-        .dark-mode .route-container {
+        .dark-mode .search-container, .dark-mode .route-container {
             background: #333;
             color: #fff;
         }
@@ -105,15 +88,13 @@
             </div>
         </div>
         <div class="row">
-            <div class="col-12">
+            <div class="col-md-6">
                 <div class="search-container">
                     <input type="text" id="search-input" placeholder="Enter address or landmark">
                     <button id="search-button" class="btn btn-primary">Search</button>
                 </div>
             </div>
-        </div>
-        <div class="row">
-            <div class="col-12">
+            <div class="col-md-6">
                 <div class="route-container">
                     <input type="text" id="start-input" placeholder="Start location">
                     <input type="text" id="end-input" placeholder="End location">
@@ -291,7 +272,7 @@
                 }
 
                 // Fetch route from OpenRouteService
-                fetch(`https://api.openrouteservice.org/v2/directions/driving-car?api_key=YOUR_API_KEY&start=${startCoords.lon},${startCoords.lat}&end=${endCoords.lon},${endCoords.lat}`)
+                fetch(`https://api.openrouteservice.org/v2/directions/driving-car?api_key=5b3ce3597851110001cf6248d76511ae49244e1fb655683b68d9ba76&start=${startCoords.lon},${startCoords.lat}&end=${endCoords.lon},${endCoords.lat}`)
                     .then(res => res.json())
                     .then(data => {
                         const route = data.features[0].geometry.coordinates;
