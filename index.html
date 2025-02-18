@@ -273,11 +273,21 @@
 
                 // Fetch route from OpenRouteService
                 fetch(`https://api.openrouteservice.org/v2/directions/driving-car?api_key=5b3ce3597851110001cf6248d76511ae49244e1fb655683b68d9ba76&start=${startCoords.lon},${startCoords.lat}&end=${endCoords.lon},${endCoords.lat}`)
-                    .then(res => res.json())
+                    .then(res => {
+                        if (!res.ok) {
+                            throw new Error(`HTTP error! Status: ${res.status}`);
+                        }
+                        return res.json();
+                    })
                     .then(data => {
-                        const route = data.features[0].geometry.coordinates;
-                        const routeLine = L.polyline(route.map(coord => [coord[1], coord[0]]), { color: 'blue' }).addTo(map);
-                        map.fitBounds(routeLine.getBounds());
+                        console.log('API Response:', data); // Log the API response
+                        if (data.features && data.features.length > 0) {
+                            const route = data.features[0].geometry.coordinates;
+                            const routeLine = L.polyline(route.map(coord => [coord[1], coord[0]]), { color: 'blue' }).addTo(map);
+                            map.fitBounds(routeLine.getBounds());
+                        } else {
+                            alert('No route found. Please check the start and end locations.');
+                        }
                     })
                     .catch(error => {
                         console.error('Error fetching route:', error);
