@@ -43,10 +43,31 @@
             background: #333;
             color: #fff;
         }
+
+        .search-container {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            z-index: 9999;
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .dark-mode .search-container {
+            background: #333;
+            color: #fff;
+        }
     </style>
 </head>
 <body>
     <button id="dark-mode-toggle" class="dark-mode-toggle">Toggle Dark Mode</button>
+
+    <div class="search-container">
+        <input type="text" id="search-input" placeholder="Enter address or landmark">
+        <button id="search-button" class="btn btn-primary btn-sm">Search</button>
+    </div>
 
     <div class="container-fluid py-3">
         <div class="row">
@@ -156,6 +177,35 @@
                 }
             });
         }
+
+        document.getElementById('search-button').addEventListener('click', async function() {
+            const query = document.getElementById('search-input').value;
+            if (!query) return;
+
+            try {
+                const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`);
+                const data = await response.json();
+
+                if (data.length > 0) {
+                    const { lat, lon, display_name } = data[0];
+                    map.setView([lat, lon], 13);
+
+                    const marker = L.marker([lat, lon]).addTo(map);
+                    marker.bindPopup(`
+                        <div>
+                            <input type="text" value="${display_name}" id="marker-name-${marker._leaflet_id}" style="width: 100%; margin-bottom: 5px;">
+                            <button onclick="updateMarkerName(${marker._leaflet_id})" class="btn btn-primary btn-sm">Save</button>
+                            <button onclick="deleteMarker(${marker._leaflet_id})" class="btn btn-danger btn-sm">Delete</button>
+                        </div>
+                    `).openPopup();
+                } else {
+                    alert('Address or landmark not found.');
+                }
+            } catch (error) {
+                console.error('Error fetching location:', error);
+                alert('Error fetching location. Please try again.');
+            }
+        });
     </script>
 </body>
 </html>
