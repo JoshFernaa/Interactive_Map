@@ -61,9 +61,7 @@
         let map = L.map('map').setView([20, 0], 2);
 
         const lightModeTiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/">CARTO</a>',
-            subdomains: 'abcd',
-            maxZoom: 20
+            attribution: '&copy; OpenStreetMap contributors & CartoDB'
         }).addTo(map);
 
         const darkModeTiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
@@ -85,10 +83,24 @@
             { name: "Taj Mahal", coords: [27.1751, 78.0421] }
         ];
 
+        function createMarker(lat, lng, name) {
+            const marker = L.marker([lat, lng]).addTo(markerLayer);
+            marker.bindPopup(getPopupContent(marker, name)).openPopup();
+            return marker;
+        }
+
+        function getPopupContent(marker, name) {
+            return `
+                <div>
+                    <input type="text" value="${name}" id="marker-name-${marker._leaflet_id}" style="width: 100%; margin-bottom: 5px;">
+                    <button onclick="updateMarkerName(${marker._leaflet_id})" class="btn btn-primary btn-sm">Save</button>
+                    <button onclick="deleteMarker(${marker._leaflet_id})" class="btn btn-danger btn-sm">Delete</button>
+                </div>
+            `;
+        }
+
         landmarks.forEach(landmark => {
-            L.marker(landmark.coords)
-                .bindPopup(`<b>${landmark.name}</b>`)
-                .addTo(markerLayer);
+            createMarker(landmark.coords[0], landmark.coords[1], landmark.name);
         });
 
         document.getElementById('dark-mode-toggle').addEventListener('click', function() {
@@ -109,8 +121,6 @@
             currentTileLayer.addTo(map);
         }
 
-        let customMarkers = {};
-
         map.on('click', async function(e) {
             if (e.originalEvent.target.tagName !== 'BUTTON' && e.originalEvent.target.tagName !== 'INPUT') {
                 const { lat, lng } = e.latlng;
@@ -119,42 +129,31 @@
                     const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
                     const data = await response.json();
                     const address = data.display_name || "Custom Location";
-
-                    const marker = L.marker([lat, lng]).addTo(map);
-                    customMarkers[marker._leaflet_id] = marker;
-                    
-                    marker.bindPopup(getPopupContent(marker._leaflet_id, address)).openPopup();
+                    createMarker(lat, lng, address);
                 } catch (error) {
                     console.error('Error fetching address:', error);
                 }
             }
         });
 
-        function getPopupContent(markerId, name) {
-            return `
-                <div>
-                    <input type="text" value="${name}" id="marker-name-${markerId}" style="width: 100%; margin-bottom: 5px;">
-                    <button onclick="saveMarker(${markerId})" class="btn btn-primary btn-sm">Save</button>
-                    <button onclick="deleteMarker(${markerId})" class="btn btn-danger btn-sm">Delete</button>
-                </div>
-            `;
-        }
-
-        function saveMarker(markerId) {
+        function updateMarkerName(markerId) {
             const input = document.getElementById(`marker-name-${markerId}`);
             if (!input) return;
             
             const newName = input.value;
-            if (customMarkers[markerId]) {
-                customMarkers[markerId].bindPopup(`<b>${newName}</b>`).closePopup();
-            }
+            map.eachLayer(layer => {
+                if (layer instanceof L.Marker && layer._leaflet_id === markerId) {
+                    layer.bindPopup(getPopupContent(layer, newName)).closePopup();
+                }
+            });
         }
 
         function deleteMarker(markerId) {
-            if (customMarkers[markerId]) {
-                map.removeLayer(customMarkers[markerId]);
-                delete customMarkers[markerId];
-            }
+            map.eachLayer(layer => {
+                if (layer instanceof L.Marker && layer._leaflet_id === markerId) {
+                    map.removeLayer(layer);
+                }
+            });
         }
     </script>
 </body>
