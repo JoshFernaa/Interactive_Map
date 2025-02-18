@@ -248,6 +248,30 @@
             }
         });
 
+        // Function to calculate the distance between two coordinates (in km)
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371; // Radius of the Earth in km
+            const dLat = (lat2 - lat1) * (Math.PI / 180);
+            const dLon = (lon2 - lon1) * (Math.PI / 180);
+            const a =
+                Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+                Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c; // Distance in km
+        }
+
+        // Function to fetch a route using a specific profile
+        function fetchRoute(profile, startCoords, endCoords) {
+            return fetch(`https://api.openrouteservice.org/v2/directions/${profile}?api_key=5b3ce3597851110001cf6248d76511ae49244e1fb655683b68d9ba76&start=${startCoords.lon},${startCoords.lat}&end=${endCoords.lon},${endCoords.lat}`)
+                .then(res => {
+                    if (!res.ok) {
+                        throw new Error(`HTTP error! Status: ${res.status}`);
+                    }
+                    return res.json();
+                });
+        }
+
         // Route Planning
         document.getElementById('route-button').addEventListener('click', function() {
             const start = document.getElementById('start-input').value;
@@ -271,14 +295,24 @@
                     return;
                 }
 
-                // Fetch route from OpenRouteService
-                fetch(`https://api.openrouteservice.org/v2/directions/driving-car?api_key=5b3ce3597851110001cf6248d76511ae49244e1fb655683b68d9ba76&start=${startCoords.lon},${startCoords.lat}&end=${endCoords.lon},${endCoords.lat}`)
-                    .then(res => {
-                        if (!res.ok) {
-                            throw new Error(`HTTP error! Status: ${res.status}`);
-                        }
-                        return res.json();
-                    })
+                // Calculate the distance between the two points
+                const distance = calculateDistance(
+                    parseFloat(startCoords.lat),
+                    parseFloat(startCoords.lon),
+                    parseFloat(endCoords.lat),
+                    parseFloat(endCoords.lon)
+                );
+
+                console.log('Distance:', distance, 'km');
+
+                // Check if the distance is too large
+                if (distance > 10000) { // 10,000 km limit for driving-car profile
+                    alert('The distance between the two locations is too large for driving directions. Please try locations closer together.');
+                    return;
+                }
+
+                // Try fetching the route with the driving-car profile first
+                fetchRoute('driving-car', startCoords, endCoords)
                     .then(data => {
                         console.log('API Response:', data); // Log the API response
                         if (data.features && data.features.length > 0) {
@@ -290,8 +324,23 @@
                         }
                     })
                     .catch(error => {
-                        console.error('Error fetching route:', error);
-                        alert('Error fetching route. Please try again.');
+                        console.error('Error fetching route with driving-car profile:', error);
+                        // Fallback to cycling-regular profile
+                        fetchRoute('cycling-regular', startCoords, endCoords)
+                            .then(data => {
+                                console.log('API Response (cycling-regular):', data);
+                                if (data.features && data.features.length > 0) {
+                                    const route = data.features[0].geometry.coordinates;
+                                    const routeLine = L.polyline(route.map(coord => [coord[1], coord[0]]), { color: 'green' }).addTo(map);
+                                    map.fitBounds(routeLine.getBounds());
+                                } else {
+                                    alert('No route found. Please try different locations.');
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error fetching route with cycling-regular profile:', error);
+                                alert('Error fetching route. Please try again.');
+                            });
                     });
             });
         });
