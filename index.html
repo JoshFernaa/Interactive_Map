@@ -1,98 +1,61 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interactive Map</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-    <style>
-        body.dark-mode {
-            background-color: #121212;
-            color: #ffffff;
-        }
+import React, { useState, useEffect } from "react";
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import L from "leaflet";
+import "leaflet-routing-machine";
+import "leaflet/dist/leaflet.css";
 
-        .dark-mode-toggle {
-            position: fixed;
-            top: 15px;
-            right: 15px;
-            background: #333;
-            color: #fff;
-            border: none;
-            padding: 10px 15px;
-            cursor: pointer;
-            border-radius: 5px;
-            z-index: 9999;
-        }
+const customIcon = new L.Icon({
+  iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+});
 
-        #map {
-            width: 100%;
-            height: 80vh;
-        }
+const locations = [
+  { name: "Eiffel Tower", lat: 48.8584, lng: 2.2945 },
+  { name: "Great Wall of China", lat: 40.4319, lng: 116.5704 },
+  { name: "Machu Picchu", lat: -13.1631, lng: -72.545 },
+];
 
-        .form-container {
-            margin-top: 15px;
-            padding: 10px;
-            background: #f8f9fa;
-            border-radius: 5px;
-        }
-        
-        .dark-mode .form-container {
-            background: #333;
-            color: #fff;
-        }
+const WeatherOverlay = ({ lat, lng }) => {
+  const [weather, setWeather] = useState(null);
 
-        .search-container, .route-container {
-            margin: 15px auto;
-            padding: 10px;
-            background: white;
-            border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
+  useEffect(() => {
+    const fetchWeather = async () => {
+      const apiKey = "52d05b7e27e9bc32067327bf0f6532dc";
+      const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lng}&appid=${apiKey}&units=imperial`;
+      try {
+        const response = await fetch(url);
+        const data = await response.json();
+        setWeather(data);
+      } catch (error) {
+        console.error("Error fetching weather data:", error);
+      }
+    };
+    fetchWeather();
+  }, [lat, lng]);
 
-        .dark-mode .search-container, .dark-mode .route-container {
-            background: #333;
-            color: #fff;
-        }
-    </style>
-</head>
-<body>
-    <button id="dark-mode-toggle" class="dark-mode-toggle">Toggle Dark Mode</button>
-
-    <div class="container-fluid py-3">
-        <div class="row">
-            <div class="col-12">
-                <div id="map"></div>
-            </div>
-        </div>
+  return weather ? (
+    <div className="weather-overlay">
+      <p>{weather.weather[0].description}</p>
+      <p>{weather.main.temp}°F</p>
     </div>
+  ) : null;
+};
 
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-    <script>
-        let map = L.map('map').setView([20, 0], 2);
+const MapComponent = () => {
+  return (
+    <MapContainer center={[20, 0]} zoom={2} style={{ height: "100vh", width: "100%" }}>
+      <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+      {locations.map((loc, index) => (
+        <Marker key={index} position={[loc.lat, loc.lng]} icon={customIcon}>
+          <Popup>
+            <strong>{loc.name}</strong>
+            <WeatherOverlay lat={loc.lat} lng={loc.lng} />
+          </Popup>
+        </Marker>
+      ))}
+    </MapContainer>
+  );
+};
 
-        const lightModeTiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/">CARTO</a>',
-            subdomains: 'abcd',
-            maxZoom: 20
-        }).addTo(map);
-
-        const darkModeTiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; OpenStreetMap contributors & CartoDB'
-        });
-
-        let currentTileLayer = lightModeTiles;
-        currentTileLayer.addTo(map);
-
-        document.getElementById('dark-mode-toggle').addEventListener('click', function() {
-            document.body.classList.toggle('dark-mode');
-            const darkModeEnabled = document.body.classList.contains('dark-mode');
-
-            map.removeLayer(currentTileLayer);
-            currentTileLayer = darkModeEnabled ? darkModeTiles : lightModeTiles;
-            currentTileLayer.addTo(map);
-        });
-    </script>
-</body>
-</html>
+export default MapComponent;
