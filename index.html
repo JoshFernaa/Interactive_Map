@@ -8,74 +8,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <style>
-        body.dark-mode {
-            background-color: #121212;
-            color: #ffffff;
-        }
-
-        .dark-mode-toggle {
-            position: fixed;
-            top: 15px;
-            right: 15px;
-            background: #333;
-            color: #fff;
-            border: none;
-            padding: 10px 15px;
-            cursor: pointer;
-            border-radius: 5px;
-            z-index: 9999;
-        }
-
-        #map {
-            width: 100%;
-            height: 80vh;
-        }
-
-        .form-container {
-            margin-top: 15px;
-            padding: 10px;
-            background: #f8f9fa;
-            border-radius: 5px;
-        }
-        
-        .dark-mode .form-container {
-            background: #333;
-            color: #fff;
-        }
-
-        .search-container, .route-container {
-            margin: 15px auto;
-            padding: 10px;
-            background: white;
-            border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-
-        .dark-mode .search-container, .dark-mode .route-container {
-            background: #333;
-            color: #fff;
-        }
-
-        #search-input, #start-input, #end-input {
-            width: calc(100% - 100px);
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            margin-right: 10px;
-        }
-
-        #search-button, #route-button {
-            padding: 8px 15px;
-            border: none;
-            border-radius: 5px;
-            background-color: #007bff;
-            color: white;
-            cursor: pointer;
-        }
-
-        #search-button:hover, #route-button:hover {
-            background-color: #0056b3;
-        }
+        /* Your existing CSS styles */
     </style>
 </head>
 <body>
@@ -105,6 +38,7 @@
     </div>
 
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/@mapbox/polyline@1.1.1/polyline.js"></script>
     <script>
         let map = L.map('map').setView([20, 0], 2);
 
@@ -316,8 +250,9 @@
                     .then(data => {
                         console.log('API Response:', data); // Log the API response
                         if (data.paths && data.paths.length > 0) {
-                            const route = data.paths[0].points.coordinates;
-                            const routeLine = L.polyline(route.map(coord => [coord[1], coord[0]]), { color: 'blue' }).addTo(map);
+                            // Decode the polyline-encoded points
+                            const route = polyline.decode(data.paths[0].points);
+                            const routeLine = L.polyline(route, { color: 'blue' }).addTo(map);
                             map.fitBounds(routeLine.getBounds());
                         } else {
                             alert('No route found. Please check the start and end locations.');
