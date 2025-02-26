@@ -8,6 +8,92 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <style>
+        /* Ensure the map container and its parents have a valid height */
+        html, body {
+            height: 100%;
+            margin: 0;
+        }
+
+        .container-fluid {
+            height: 100%;
+            padding: 15px; /* Add some padding */
+        }
+
+        .row {
+            height: 100%;
+            margin: 0; /* Remove default margin */
+        }
+
+        #map {
+            width: 100%;
+            height: 70vh; /* Set a valid height */
+            min-height: 400px; /* Add a minimum height */
+        }
+
+        /* Your existing CSS styles */
+        body.dark-mode {
+            background-color: #121212;
+            color: #ffffff;
+        }
+
+        .dark-mode-toggle {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            background: #333;
+            color: #fff;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+            border-radius: 5px;
+            z-index: 9999;
+        }
+
+        .form-container {
+            margin-top: 15px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+        
+        .dark-mode .form-container {
+            background: #333;
+            color: #fff;
+        }
+
+        .search-container, .route-container {
+            margin: 15px auto;
+            padding: 10px;
+            background: white;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .dark-mode .search-container, .dark-mode .route-container {
+            background: #333;
+            color: #fff;
+        }
+
+        #search-input, #start-input, #end-input {
+            width: calc(100% - 100px);
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-right: 10px;
+        }
+
+        #search-button, #route-button {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+
+        #search-button:hover, #route-button:hover {
+            background-color: #0056b3;
+        }
     </style>
 </head>
 <body>
@@ -38,14 +124,12 @@
 
     <!-- Load Leaflet.js -->
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-    <!-- Load @mapbox/polyline library -->
-    <script src="https://cdn.jsdelivr.net/npm/@mapbox/polyline@1.1.1/src/polyline.js"></script>
     <script>
-        // Debug: Check if polyline is loaded
-        if (typeof polyline === 'undefined') {
-            console.error('Polyline library is not loaded. Please check the script tag.');
+        // Debug: Check if Leaflet is loaded
+        if (typeof L === 'undefined') {
+            console.error('Leaflet library is not loaded. Please check the script tag.');
         } else {
-            console.log('Polyline library is loaded successfully.');
+            console.log('Leaflet library is loaded successfully.');
         }
 
         // Ensure the map container exists and has a valid height
@@ -266,11 +350,11 @@
                         .then(data => {
                             console.log('API Response:', data); // Log the API response
                             if (data.paths && data.paths.length > 0) {
-                                // Decode the polyline
-                                const decodedPoints = polyline.decode(data.paths[0].points);
+                                // Comment out the polyline.decode() call for now
+                                // const decodedPoints = polyline.decode(data.paths[0].points);
 
                                 // Draw the route on the map
-                                const routeLine = L.polyline(decodedPoints, { color: 'blue' }).addTo(map);
+                                const routeLine = L.polyline([], { color: 'blue' }).addTo(map); 
                                 map.fitBounds(routeLine.getBounds());
                             } else {
                                 alert('No route found. Please check the start and end locations.');
