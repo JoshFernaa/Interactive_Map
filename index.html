@@ -8,33 +8,26 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <style>
-        /* Ensure the map and form containers are properly aligned */
+        /* Ensure the map container and its parents have a valid height */
         html, body {
             height: 100%;
             margin: 0;
         }
 
         .container-fluid {
-            height: auto; /* Remove fixed height */
+            height: 100%;
             padding: 15px; /* Add some padding */
+        }
+
+        .row {
+            height: 100%;
+            margin: 0; /* Remove default margin */
         }
 
         #map {
             width: 100%;
-            height: 70vh; /* Reduce the map height slightly */
+            height: 70vh; /* Set a valid height */
             min-height: 400px; /* Add a minimum height */
-        }
-
-        .row {
-            margin: 0; /* Remove default margin */
-        }
-
-        .search-container, .route-container {
-            margin-top: 15px; /* Add some spacing between the map and the boxes */
-            padding: 10px;
-            background: white;
-            border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
 
         /* Your existing CSS styles */
@@ -64,6 +57,19 @@
         }
         
         .dark-mode .form-container {
+            background: #333;
+            color: #fff;
+        }
+
+        .search-container, .route-container {
+            margin: 15px auto;
+            padding: 10px;
+            background: white;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .dark-mode .search-container, .dark-mode .route-container {
             background: #333;
             color: #fff;
         }
@@ -118,9 +124,14 @@
 
     <!-- Load Leaflet.js -->
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-    <!-- Load @mapbox/polyline library -->
-    <script src="https://unpkg.com/@mapbox/polyline@1.1.1/polyline.js"></script>
     <script>
+        // Debug: Check if Leaflet is loaded
+        if (typeof L === 'undefined') {
+            console.error('Leaflet library is not loaded. Please check the script tag.');
+        } else {
+            console.log('Leaflet library is loaded successfully.');
+        }
+
         // Ensure the map container exists and has a valid height
         const mapContainer = document.getElementById('map');
         if (!mapContainer) {
@@ -339,11 +350,11 @@
                         .then(data => {
                             console.log('API Response:', data); // Log the API response
                             if (data.paths && data.paths.length > 0) {
-                                // Decode the polyline
-                                const decodedPoints = polyline.decode(data.paths[0].points);
+                                // Comment out the polyline.decode() call for now
+                                // const decodedPoints = polyline.decode(data.paths[0].points);
 
                                 // Draw the route on the map
-                                const routeLine = L.polyline(decodedPoints, { color: 'blue' }).addTo(map);
+                                const routeLine = L.polyline([], { color: 'blue' }).addTo(map); // Empty array for now
                                 map.fitBounds(routeLine.getBounds());
                             } else {
                                 alert('No route found. Please check the start and end locations.');
