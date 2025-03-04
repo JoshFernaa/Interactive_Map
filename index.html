@@ -8,26 +8,33 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <style>
-        /* Ensure the map container and its parents have a valid height */
+        /* Ensure the map and form containers are properly aligned */
         html, body {
             height: 100%;
             margin: 0;
         }
 
         .container-fluid {
-            height: 100%;
+            height: auto; /* Remove fixed height */
             padding: 15px; /* Add some padding */
-        }
-
-        .row {
-            height: 100%;
-            margin: 0; /* Remove default margin */
         }
 
         #map {
             width: 100%;
-            height: 70vh; /* Set a valid height */
+            height: 70vh; /* Reduce the map height slightly */
             min-height: 400px; /* Add a minimum height */
+        }
+
+        .row {
+            margin: 0; /* Remove default margin */
+        }
+
+        .search-container, .route-container {
+            margin-top: 15px; /* Add some spacing between the map and the boxes */
+            padding: 10px;
+            background: white;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
 
         /* Your existing CSS styles */
@@ -57,19 +64,6 @@
         }
         
         .dark-mode .form-container {
-            background: #333;
-            color: #fff;
-        }
-
-        .search-container, .route-container {
-            margin: 15px auto;
-            padding: 10px;
-            background: white;
-            border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-
-        .dark-mode .search-container, .dark-mode .route-container {
             background: #333;
             color: #fff;
         }
@@ -134,7 +128,6 @@
         } else if (mapContainer.offsetHeight === 0) {
             console.error('Map container has no height. Ensure it has a valid height (e.g., 80vh).');
         } else {
-            console.log('Map container has a valid height:', mapContainer.offsetHeight);
             // Initialize the map
             let map = L.map('map').setView([20, 0], 2);
 
