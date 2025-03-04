@@ -295,6 +295,50 @@
                     });
             }
 
+            // Function to split a route into multiple segments
+            function splitRoute(startCoords, endCoords) {
+                const intermediatePoints = [];
+                const numSegments = 3; // Split the route into 3 segments
+                const latStep = (endCoords.lat - startCoords.lat) / numSegments;
+                const lonStep = (endCoords.lon - startCoords.lon) / numSegments;
+
+                for (let i = 1; i < numSegments; i++) {
+                    intermediatePoints.push({
+                        lat: startCoords.lat + latStep * i,
+                        lon: startCoords.lon + lonStep * i
+                    });
+                }
+
+                return intermediatePoints;
+            }
+
+            // Function to fetch and draw multiple route segments
+            async function fetchAndDrawSegments(startCoords, endCoords) {
+                const intermediatePoints = splitRoute(startCoords, endCoords);
+                const allPoints = [startCoords, ...intermediatePoints, endCoords];
+
+                for (let i = 0; i < allPoints.length - 1; i++) {
+                    const segmentStart = allPoints[i];
+                    const segmentEnd = allPoints[i + 1];
+
+                    try {
+                        const data = await fetchRoute(segmentStart, segmentEnd);
+                        if (data.paths && data.paths.length > 0) {
+                            const decodedPoints = polyline.decode(data.paths[0].points);
+                            const routeLine = L.polyline(decodedPoints, { color: 'blue' }).addTo(map);
+
+                            if (i === 0) {
+                                map.fitBounds(routeLine.getBounds());
+                            }
+                        } else {
+                            console.error('No route found for segment:', segmentStart, segmentEnd);
+                        }
+                    } catch (error) {
+                        console.error('Error fetching route segment:', error);
+                    }
+                }
+            }
+
             // Route Planning
             document.getElementById('route-button').addEventListener('click', function() {
                 const start = document.getElementById('start-input').value;
@@ -330,7 +374,10 @@
 
                     // Check if the distance is too large
                     if (distance > 10000) { // 10,000 km limit for driving directions
-                        alert('The distance between the two locations is too large for driving directions. Please try locations closer together.');
+                        const confirmSplit = confirm('The distance between the two locations is too large for driving directions. Would you like to split the route into multiple segments?');
+                        if (confirmSplit) {
+                            fetchAndDrawSegments(startCoords, endCoords);
+                        }
                         return;
                     }
 
