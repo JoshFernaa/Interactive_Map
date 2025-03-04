@@ -8,7 +8,92 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <style>
+        /* Ensure the map container and its parents have a valid height */
+        html, body {
+            height: 100%;
+            margin: 0;
+        }
+
+        .container-fluid {
+            height: 100%;
+            padding: 15px; /* Add some padding */
+        }
+
+        .row {
+            height: 100%;
+            margin: 0; /* Remove default margin */
+        }
+
+        #map {
+            width: 100%;
+            height: 70vh; /* Set a valid height */
+            min-height: 400px; /* Add a minimum height */
+        }
+
         /* Your existing CSS styles */
+        body.dark-mode {
+            background-color: #121212;
+            color: #ffffff;
+        }
+
+        .dark-mode-toggle {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            background: #333;
+            color: #fff;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+            border-radius: 5px;
+            z-index: 9999;
+        }
+
+        .form-container {
+            margin-top: 15px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+        
+        .dark-mode .form-container {
+            background: #333;
+            color: #fff;
+        }
+
+        .search-container, .route-container {
+            margin: 15px auto;
+            padding: 10px;
+            background: white;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .dark-mode .search-container, .dark-mode .route-container {
+            background: #333;
+            color: #fff;
+        }
+
+        #search-input, #start-input, #end-input {
+            width: calc(100% - 100px);
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-right: 10px;
+        }
+
+        #search-button, #route-button {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+
+        #search-button:hover, #route-button:hover {
+            background-color: #0056b3;
+        }
     </style>
 </head>
 <body>
@@ -49,6 +134,7 @@
         } else if (mapContainer.offsetHeight === 0) {
             console.error('Map container has no height. Ensure it has a valid height (e.g., 80vh).');
         } else {
+            console.log('Map container has a valid height:', mapContainer.offsetHeight);
             // Initialize the map
             let map = L.map('map').setView([20, 0], 2);
 
