@@ -373,11 +373,8 @@
                     console.log('Distance:', distance, 'km');
 
                     // Check if the distance is too large
-                    if (distance > 10000) { // 10,000 km limit for driving directions
-                        const confirmSplit = confirm('The distance between the two locations is too large for driving directions. Would you like to split the route into multiple segments?');
-                        if (confirmSplit) {
-                            fetchAndDrawSegments(startCoords, endCoords);
-                        }
+                    if (distance > 1000) { // 1,000 km limit for driving directions
+                        fetchAndDrawSegments(startCoords, endCoords);
                         return;
                     }
 
