@@ -284,9 +284,12 @@
                 return R * c; // Distance in km
             }
 
-            // Function to fetch a route using GraphHopper API
-            function fetchRoute(startLatLon, endLatLon) {
-                return fetch(`https://graphhopper.com/api/1/route?point=${startLatLon}&point=${endLatLon}&vehicle=car&key=d8c2c1de-97d7-4ae3-b4c5-581b3338a672`)
+            // Function to fetch a route using Mapbox Directions API
+            function fetchRoute(startCoords, endCoords) {
+                const mapboxAccessToken = 'pk.eyJ1Ijoiam9zaGZlcm5hIiwiYSI6ImNtOGY2a29vNjA5cGQybnB3cW80bmRocnIifQ.K6hEFS6cOOImN_AVQcnVsw';
+                const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${startCoords.lon},${startCoords.lat};${endCoords.lon},${endCoords.lat}?geometries=geojson&access_token=${mapboxAccessToken}`;
+
+                return fetch(url)
                     .then(res => {
                         if (!res.ok) {
                             throw new Error(`HTTP error! Status: ${res.status}`);
@@ -295,54 +298,11 @@
                     });
             }
 
-            // Function to split a route into multiple segments
-            function splitRoute(startCoords, endCoords) {
-                const intermediatePoints = [];
-                const numSegments = 3; // Split the route into 3 segments
-                const latStep = (endCoords.lat - startCoords.lat) / numSegments;
-                const lonStep = (endCoords.lon - startCoords.lon) / numSegments;
-
-                for (let i = 1; i < numSegments; i++) {
-                    intermediatePoints.push({
-                        lat: startCoords.lat + latStep * i,
-                        lon: startCoords.lon + lonStep * i
-                    });
-                }
-
-                return intermediatePoints;
-            }
-
-            // Function to fetch and draw multiple route segments
-            async function fetchAndDrawSegments(startCoords, endCoords) {
-                const intermediatePoints = splitRoute(startCoords, endCoords);
-                const allPoints = [startCoords, ...intermediatePoints, endCoords];
-
-                for (let i = 0; i < allPoints.length - 1; i++) {
-                    const segmentStart = allPoints[i];
-                    const segmentEnd = allPoints[i + 1];
-
-                    try {
-                        // Ensure coordinates are properly formatted
-                        const startLatLon = `${segmentStart.lat},${segmentStart.lon}`;
-                        const endLatLon = `${segmentEnd.lat},${segmentEnd.lon}`;
-
-                        const data = await fetchRoute(startLatLon, endLatLon);
-                        if (data.paths && data.paths.length > 0) {
-                            const decodedPoints = polyline.decode(data.paths[0].points);
-                            const routeLine = L.polyline(decodedPoints, { color: 'blue' }).addTo(map);
-
-                            if (i === 0) {
-                                map.fitBounds(routeLine.getBounds());
-                            }
-                        } else {
-                            console.error('No route found for segment:', segmentStart, segmentEnd);
-                            alert(`No route found for segment ${i + 1}. Please try again.`);
-                        }
-                    } catch (error) {
-                        console.error('Error fetching route segment:', error);
-                        alert(`Error fetching route segment ${i + 1}. Please try again.`);
-                    }
-                }
+            // Function to draw a route on the map
+            function drawRoute(route) {
+                const routeCoordinates = route.geometry.coordinates;
+                const routeLine = L.polyline(routeCoordinates, { color: 'blue' }).addTo(map);
+                map.fitBounds(routeLine.getBounds());
             }
 
             // Route Planning
@@ -378,35 +338,16 @@
 
                     console.log('Distance:', distance, 'km');
 
-                    // Check if the distance is too large
-                    if (distance > 1000) { // 1,000 km limit for driving directions
-                        fetchAndDrawSegments(
-                            { lat: parseFloat(startCoords.lat), lon: parseFloat(startCoords.lon) },
-                            { lat: parseFloat(endCoords.lat), lon: parseFloat(endCoords.lon) }
-                        );
-                        return;
-                    }
-
-                    // Fetch route using GraphHopper API
+                    // Fetch route using Mapbox Directions API
                     fetchRoute(
-                        `${startCoords.lat},${startCoords.lon}`,
-                        `${endCoords.lat},${endCoords.lon}`
+                        { lat: parseFloat(startCoords.lat), lon: parseFloat(startCoords.lon) },
+                        { lat: parseFloat(endCoords.lat), lon: parseFloat(endCoords.lon) }
                     )
                         .then(data => {
                             console.log('API Response:', data); // Log the API response
-                            if (data.paths && data.paths.length > 0) {
-                                // Decode the polyline
-                                const decodedPoints = polyline.decode(data.paths[0].points);
-
+                            if (data.routes && data.routes.length > 0) {
                                 // Draw the route on the map
-                                const routeLine = L.polyline(decodedPoints, { color: 'blue' }).addTo(map);
-
-                                // Ensure the routeLine has valid coordinates before fitting bounds
-                                if (routeLine.getLatLngs().length > 0) {
-                                    map.fitBounds(routeLine.getBounds());
-                                } else {
-                                    console.error('No valid coordinates found in the route.');
-                                }
+                                drawRoute(data.routes[0]);
                             } else {
                                 alert('No route found. Please check the start and end locations.');
                             }
